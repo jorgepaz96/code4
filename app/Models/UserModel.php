@@ -3,7 +3,8 @@ use CodeIgniter\Model;
 class UserModel extends Model 
 {
     protected $table      = 'users';
-    // protected $primaryKey = 'id';
+    protected $primaryKey = 'id';
+    protected $returnType = 'json';
     public function __construct()
     {
         parent::__construct();

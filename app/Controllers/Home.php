@@ -12,7 +12,7 @@ class Home extends BaseController
     function user() {        
         $userModel = new UserModel();
         $data = $userModel->findAll();
-        print_r($data);
+        return $this->response->setJSON($data);
 
     }
 }
