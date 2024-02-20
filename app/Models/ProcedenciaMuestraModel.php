@@ -24,7 +24,10 @@ class ProcedenciaMuestraModel extends Model
 
     // Validation
     protected $validationRules      = [
-	    'des_nombre' => 'required|max_length[100]|is_unique[procedencia_muestra.des_nombre,id,{$id}]',
+        'des_nombre' => [
+            'label' => ' ',
+            'rules' => 'required|max_length[100]|is_unique[procedencia_muestra.des_nombre,id,{$id}]',
+        ],	    
         'estado' => 'in_list[0,1]'
 	];
     protected $validationMessages   = [];

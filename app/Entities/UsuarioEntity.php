@@ -4,12 +4,14 @@ namespace App\Entities;
 
 use CodeIgniter\Entity\Entity;
 
-class ProcedenciaMuestraEntity extends Entity
+class UsuarioEntity extends Entity
 {
     // protected $datamap = [];
     protected $attributes = [
         'id' => null,
-        'des_nombre' => null,
+        'username' => null,
+        'email' => null,
+        'password' => null,
         'estado' => null,
         'aud_fecha_registra' => null,
         'aud_usuario_registra' => null,
@@ -17,10 +19,6 @@ class ProcedenciaMuestraEntity extends Entity
         'aud_usuario_actualiza' => null        
     ];    
     // protected $casts   = [];
-    protected function setDesNombre(string $des_nombre): ProcedenciaMuestraEntity
-    {
-        $this->attributes['des_nombre'] = $des_nombre;
-        return $this;
-    }
+    
 }
 

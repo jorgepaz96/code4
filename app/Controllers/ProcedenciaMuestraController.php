@@ -10,7 +10,8 @@ class ProcedenciaMuestraController extends ResourceController
     use ResponseTrait;
     private $procedenciaMuestraModel;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->procedenciaMuestraModel = model('ProcedenciaMuestraModel');
     }
     /**
@@ -20,15 +21,54 @@ class ProcedenciaMuestraController extends ResourceController
      */
     public function index()
     {
-        $des_nombre = $this->request->getVar('des_nombre');    
-           
-        $this->procedenciaMuestraModel->select('id, des_nombre, estado');
-        (!isset($des_nombre)) ?: $this->procedenciaMuestraModel->like('des_nombre',$des_nombre,'after');
-        $this->procedenciaMuestraModel->where('estado','1');
-        $this->procedenciaMuestraModel->limit(5);
-        $data = $this->procedenciaMuestraModel->findAll();        
-         
-        return $this->respond($data, 200);
+        $des_nombre = $this->request->getGet('des_nombre') ?? '';
+        $estado = $this->request->getGet('estado') ?? '100';
+        $jsonParam = $this->request->getGet('tablaData') ?? '{}';
+
+        try {            
+            $jsonData = json_decode($jsonParam, true) ?? [];
+
+            if (empty($jsonData)) :
+                return $this->failValidationError('No se proporcionaron datos válidos');
+            endif;
+            // Consulta de data
+            $campoOrden = $jsonData['sortField'] ?? 'des_nombre';
+            $tipoOrden = $jsonData['sortOrder'] == '1' ? 'asc' : 'desc';
+            
+            $this->procedenciaMuestraModel->select('id, des_nombre, estado');
+            
+            if (!empty($des_nombre)) :
+                $this->procedenciaMuestraModel->like('des_nombre', $des_nombre, 'match');
+            endif;
+
+            if ($estado !== '100') :
+                $this->procedenciaMuestraModel->where('estado', $estado);
+            endif;
+            
+            $data = $this->procedenciaMuestraModel
+                ->orderBy($campoOrden, $tipoOrden)
+                ->offset($jsonData['first'] ?? 0)
+                ->limit($jsonData['rows'] ?? 10)
+                ->get()
+                ->getResult();
+            
+            // Consulta de total de registro
+            if (isset($des_nombre)) :
+                $this->procedenciaMuestraModel->like('des_nombre', $des_nombre, 'match');
+            endif;
+
+            if ($estado !== '100') :
+                $this->procedenciaMuestraModel->where('estado', $estado);
+            endif;
+            $totalRecords = $this->procedenciaMuestraModel->countAllResults();
+
+            $respuesta = ["procedenciamuestras" => $data, "totalRecords" => $totalRecords];
+            return $this->respond($respuesta, 200);
+        } catch (\Exception $e) {
+            // Handle exceptions
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+
     }
 
     /**
@@ -38,92 +78,108 @@ class ProcedenciaMuestraController extends ResourceController
      */
     public function show($id = null)
     {
-        $this->procedenciaMuestraModel->select('id, des_nombre, estado');
-        $this->procedenciaMuestraModel->where('id',$id);
-        $this->procedenciaMuestraModel->where('estado','1');
-        $data = $this->procedenciaMuestraModel->findAll();  
+        try {
+            $data = $this->procedenciaMuestraModel
+                ->select('id, des_nombre, estado')
+                ->where('id', $id)
+                ->first();
 
-        if($data){
-            return $this->respond($data,200);
-        }else{
-            return $this->failNotFound('No Data Found with id '.$id);
+            if (!$data):
+                return $this->failNotFound('Registro no se encuentra en la base de datos');
+            endif;
+            $data->estado = $data->estado === '1' ? true : false;
+
+
+            return $this->respond($data, 200);
+
+        } catch (\Exception $e) {
+            return $this->failServerError('Ha ocurrido un error en el servidor');
         }
-    }    
-
-    /**
-     * Create a new resource object, from "posted" parameters
-     *
-     * @return mixed
-     */
+    }
+ 
+    // create a product
     public function create()
-    {
-        $data = $this->request->getJSON();
-       
-        if ($this->procedenciaMuestraModel->save($data) === false) {
-            return $this->failValidationErrors($this->procedenciaMuestraModel->errors(),"malo");
-        }else {
-            $insertedID = $this->procedenciaMuestraModel->getInsertID();
-            $savedRecord = $this->procedenciaMuestraModel->find($insertedID);           
-            return $this->respondCreated($savedRecord);                
-        } 
-    }
-
-    /**
-     * Add or update a model resource, from "posted" properties
-     *
-     * @return mixed
-     */
-    public function update($id = null)
-    {
-        $data = $this->procedenciaMuestraModel->find($id);       
-        
-        if ($data) {        
+    {        
+        try {
             $json = $this->request->getJSON();
-            if($json){                
-                $data->des_nombre = $json->des_nombre;
-                $data->estado = $json->estado;
-            }                        
-            if (!$data->hasChanged()) {
-                die('Nothing to change');
-            }                   
-            if ($this->procedenciaMuestraModel->save($data) === false) {
-                return $this->failValidationErrors($this->procedenciaMuestraModel->errors(),"malo");
-            }else {
-                $response = [
-                    'status'   => 200,
-                    'error'    => null,
-                    'messages' => [
-                        'success' => 'Data Updated'
-                    ]
-                ];
-                return $this->respondUpdated($response);            
-            }
-        }else{
-            echo "no existe";
+            if (empty($json)):
+                return $this->failValidationError('No se proporcionaron datos');
+            endif;
+            if ($this->procedenciaMuestraModel->save($json)):
+                $insertedID = $this->procedenciaMuestraModel->getInsertID();
+                $savedRecord = $this->procedenciaMuestraModel->find($insertedID);
+                return $this->respondCreated($savedRecord);
+            else:
+                return $this->failValidationErrors($this->procedenciaMuestraModel->errors(),'Validación de formulario');
+            endif;
+        } catch (\Exception $e) {
+            return $this->failServerError('Ha ocurrido un error en el servidor');
         }
     }
+ 
+    
+    public function update($id = null)
+    {             
+        try {
+            $data = $this->procedenciaMuestraModel->find($id);
+            if (!$data):
+                return $this->failNotFound('Registro no se encuentra en la base de datos');
+            endif;
 
-    /**
-     * Delete the designated resource object from the model
-     *
-     * @return mixed
-     */
+            $json = $this->request->getJSON();
+            if (empty($json)):
+                return $this->failResourceExists('No se proporcionaron datos');
+            else:
+                $data->fill([
+                    'des_nombre' => $json->des_nombre ?? $data->des_nombre,                    
+                    'estado' => $json->estado ?? $data->estado
+                ]);
+            endif;
+
+
+            if (!$data->hasChanged()):                
+                return $this->failResourceExists('No se encontraron cambios');
+            endif;
+
+            if ($this->procedenciaMuestraModel->save($data)):
+                $savedRecord = $this->procedenciaMuestraModel->find($id);
+                return $this->respondUpdated($savedRecord);
+            else:
+                return $this->failValidationErrors($this->procedenciaMuestraModel->errors());
+            endif;
+        } catch (\Exception $e) {
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+
+        
+    }
+
+    // delete product
     public function delete($id = null)
     {
-        $data = $this->procedenciaMuestraModel->find($id);
+        try {
+            $data = $this->procedenciaMuestraModel->find($id);
+            if (!$data):
+                return $this->failNotFound('Registro no se encuentra en la base de datos');
+            endif;
 
-        if($data){
-            $this->procedenciaMuestraModel->delete($id);
-            $response = [
-                'status'   => 200,
-                'error'    => null,
-                'messages' => [
-                    'success' => 'Data Deleted'
-                ]
-            ];
-            return $this->respondDeleted($response);
-        }else{
-            return $this->failNotFound('No Data Found with id '.$id);
-        }
+            $data->estado = '0';
+
+            if (!$data->hasChanged()):
+                return $this->failValidationError('No se encontraron cambios');
+            endif;
+
+            $this->procedenciaMuestraModel->cleanValidationRules;
+
+
+            if ($this->procedenciaMuestraModel->save($data)):
+                $savedRecord = $this->procedenciaMuestraModel->find($id);
+                return $this->respondUpdated($savedRecord);
+            else:
+                return $this->failValidationErrors($this->procedenciaMuestraModel->errors());
+            endif;
+        } catch (\Exception $e) {
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }  
     }
 }

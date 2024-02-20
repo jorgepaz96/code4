@@ -2,13 +2,13 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
-use App\Entities\ExamenEntity;
+use App\Entities\MuestraEntity;
 
-class ExamenModel extends Model
+class MuestraModel extends Model
 {
-    protected $table = 'examen';
+    protected $table = 'muestra';
     protected $primaryKey = 'id';
-    protected $returnType = ExamenEntity::class;
+    protected $returnType = MuestraEntity::class;
     
     protected $allowedFields = ['des_nombre','estado'];
 
@@ -21,10 +21,7 @@ class ExamenModel extends Model
 
      // Validation
     protected $validationRules      = [
-        'des_nombre' => [
-            'label' => ' ',
-            'rules' => 'required|max_length[150]|is_unique[examen.des_nombre,id,{$id}]'
-        ],	    
+	    'des_nombre' => 'required|max_length[150]|is_unique[muestra.des_nombre,id,{$id}]',
         'estado' => 'in_list[0,1]'
 	];
 	

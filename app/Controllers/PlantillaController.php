@@ -1,21 +1,26 @@
 <?php
+
 namespace App\Controllers;
- 
+
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 
-class ExamenController extends ResourceController
+class PlantillaController extends ResourceController
 {
     use ResponseTrait;
-    private $examenModel;
+    private $plantillaModel;    
 
-    public function __construct() {
-        $this->examenModel = model('ExamenModel');
+    public function __construct()
+    {
+        $this->plantillaModel = model('PlantillaModel');
     }
-    
+    /**
+     * Return an array of resource objects, themselves in array format
+     *
+     * @return mixed
+     */
     public function index()
-    {       
-        
+    {        
         $des_nombre = $this->request->getGet('des_nombre') ?? '';
         $estado = $this->request->getGet('estado') ?? '100';
         $jsonParam = $this->request->getGet('tablaData') ?? '{}';
@@ -30,17 +35,17 @@ class ExamenController extends ResourceController
             $campoOrden = $jsonData['sortField'] ?? 'des_nombre';
             $tipoOrden = $jsonData['sortOrder'] == '1' ? 'asc' : 'desc';
             
-            $this->examenModel->select('id, des_nombre, estado');
+            $this->plantillaModel->select('id, des_nombre, estado');
             
             if (!empty($des_nombre)) :
-                $this->examenModel->like('des_nombre', $des_nombre, 'match');
+                $this->plantillaModel->like('des_nombre', $des_nombre, 'match');
             endif;
 
             if ($estado !== '100') :
-                $this->examenModel->where('estado', $estado);
+                $this->plantillaModel->where('estado', $estado);
             endif;
             
-            $data = $this->examenModel
+            $data = $this->plantillaModel
                 ->orderBy($campoOrden, $tipoOrden)
                 ->offset($jsonData['first'] ?? 0)
                 ->limit($jsonData['rows'] ?? 10)
@@ -49,28 +54,33 @@ class ExamenController extends ResourceController
             
             // Consulta de total de registro
             if (isset($des_nombre)) :
-                $this->examenModel->like('des_nombre', $des_nombre, 'match');
+                $this->plantillaModel->like('des_nombre', $des_nombre, 'match');
             endif;
 
             if ($estado !== '100') :
-                $this->examenModel->where('estado', $estado);
+                $this->plantillaModel->where('estado', $estado);
             endif;
-            $totalRecords = $this->examenModel->countAllResults();
+            $totalRecords = $this->plantillaModel->countAllResults();
 
-            $respuesta = ["examenes" => $data, "totalRecords" => $totalRecords];
+            $respuesta = ["plantillas" => $data, "totalRecords" => $totalRecords];
             return $this->respond($respuesta, 200);
         } catch (\Exception $e) {
             // Handle exceptions
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }
+
     }
- 
-    // get single productW
+
+    /**
+     * Return the properties of a resource object
+     *
+     * @return mixed
+     */
     public function show($id = null)
-    {
+    {        
         try {
-            $data = $this->examenModel
-                ->select('id, des_nombre, estado')
+            $data = $this->plantillaModel
+                ->select('id, des_nombre, des_plantilla, estado')
                 ->where('id', $id)
                 ->first();
 
@@ -85,9 +95,14 @@ class ExamenController extends ResourceController
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }
+
     }
- 
-    // create a product
+
+    /**
+     * Create a new resource object, from "posted" parameters
+     *
+     * @return mixed
+     */
     public function create()
     {        
         try {
@@ -95,23 +110,28 @@ class ExamenController extends ResourceController
             if (empty($json)):
                 return $this->failValidationError('No se proporcionaron datos');
             endif;
-            if ($this->examenModel->save($json)):
-                $insertedID = $this->examenModel->getInsertID();
-                $savedRecord = $this->examenModel->find($insertedID);
+            if ($this->plantillaModel->save($json)):
+                $insertedID = $this->plantillaModel->getInsertID();
+                $savedRecord = $this->plantillaModel->find($insertedID);
                 return $this->respondCreated($savedRecord);
             else:
-                return $this->failValidationErrors($this->examenModel->errors(),'Validación de formulario');
+                return $this->failValidationErrors($this->plantillaModel->errors(),'Validación de formulario');
             endif;
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }
+
     }
- 
-    
+
+    /**
+     * Add or update a model resource, from "posted" properties
+     *
+     * @return mixed
+     */
     public function update($id = null)
-    {             
+    {
         try {
-            $data = $this->examenModel->find($id);
+            $data = $this->plantillaModel->find($id);
             if (!$data):
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
             endif;
@@ -121,7 +141,8 @@ class ExamenController extends ResourceController
                 return $this->failResourceExists('No se proporcionaron datos');
             else:
                 $data->fill([
-                    'des_nombre' => $json->des_nombre ?? $data->des_nombre,                    
+                    'des_nombre' => $json->des_nombre ?? $data->des_nombre,
+                    'des_plantilla' => $json->des_plantilla ?? $data->des_plantilla,
                     'estado' => $json->estado ?? $data->estado
                 ]);
             endif;
@@ -131,24 +152,29 @@ class ExamenController extends ResourceController
                 return $this->failResourceExists('No se encontraron cambios');
             endif;
 
-            if ($this->examenModel->save($data)):
-                $savedRecord = $this->examenModel->find($id);
+            if ($this->plantillaModel->save($data)):
+                $savedRecord = $this->plantillaModel->find($id);
                 return $this->respondUpdated($savedRecord);
             else:
-                return $this->failValidationErrors($this->examenModel->errors());
+                return $this->failValidationErrors($this->plantillaModel->errors());
             endif;
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }
 
-        
+
+
     }
 
-    // delete product
+    /**
+     * Delete the designated resource object from the model
+     *
+     * @return mixed
+     */
     public function delete($id = null)
     {
         try {
-            $data = $this->examenModel->find($id);
+            $data = $this->plantillaModel->find($id);
             if (!$data):
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
             endif;
@@ -159,17 +185,18 @@ class ExamenController extends ResourceController
                 return $this->failValidationError('No se encontraron cambios');
             endif;
 
-            $this->examenModel->cleanValidationRules;
+            $this->plantillaModel->cleanValidationRules;
 
 
-            if ($this->examenModel->save($data)):
-                $savedRecord = $this->examenModel->find($id);
+            if ($this->plantillaModel->save($data)):
+                $savedRecord = $this->plantillaModel->find($id);
                 return $this->respondUpdated($savedRecord);
             else:
-                return $this->failValidationErrors($this->examenModel->errors());
+                return $this->failValidationErrors($this->plantillaModel->errors());
             endif;
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
-        }  
+        }
+
     }
 }

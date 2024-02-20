@@ -2,15 +2,15 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
-use App\Entities\ExamenEntity;
+use App\Entities\CompaniaEntity;
 
 class ExamenModel extends Model
 {
-    protected $table = 'examen';
+    protected $table = 'compania';
     protected $primaryKey = 'id';
-    protected $returnType = ExamenEntity::class;
+    protected $returnType = CompaniaEntity::class;
     
-    protected $allowedFields = ['des_nombre','estado'];
+    protected $allowedFields = ['nombre_comercial','nombre_fiscal','idtipo_persona','num_ruc','email','cell','estado'];
 
     // Dates
 	protected $useTimestamps        = true;
@@ -21,11 +21,13 @@ class ExamenModel extends Model
 
      // Validation
     protected $validationRules      = [
-        'des_nombre' => [
-            'label' => ' ',
-            'rules' => 'required|max_length[150]|is_unique[examen.des_nombre,id,{$id}]'
-        ],	    
-        'estado' => 'in_list[0,1]'
+	    'nombre_comercial'      => 'required|max_length[150]|is_unique[compania.nombre_comercial,id,{$id}]',
+        'nombre_fiscal'         => 'required|max_length[150]|is_unique[compania.nombre_fiscal,id,{$id}]',
+        'num_ruc'               => 'required|exact_length[11]|is_unique[compania.num_ruc,id,{$id}]',
+        'email'                 => 'required|valid_email|max_length[100]|is_unique[compania.nombre_fiscal,id,{$id}]',
+        'cell'                  => 'required|exact_length[9]',
+        'idtipo_persona'        => 'in_list[1,2]', // 1 : Natural , 2 : Juridica
+        'estado'                => 'in_list[0,1]'
 	];
 	
     protected $skipValidation       = false;
