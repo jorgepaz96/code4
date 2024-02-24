@@ -4,7 +4,7 @@ namespace App\Models;
 use CodeIgniter\Model;
 use App\Entities\CompaniaEntity;
 
-class ExamenModel extends Model
+class CompaniaModel extends Model
 {
     protected $table = 'compania';
     protected $primaryKey = 'id';
@@ -21,12 +21,30 @@ class ExamenModel extends Model
 
      // Validation
     protected $validationRules      = [
-	    'nombre_comercial'      => 'required|max_length[150]|is_unique[compania.nombre_comercial,id,{$id}]',
-        'nombre_fiscal'         => 'required|max_length[150]|is_unique[compania.nombre_fiscal,id,{$id}]',
-        'num_ruc'               => 'required|exact_length[11]|is_unique[compania.num_ruc,id,{$id}]',
-        'email'                 => 'required|valid_email|max_length[100]|is_unique[compania.nombre_fiscal,id,{$id}]',
-        'cell'                  => 'required|exact_length[9]',
-        'idtipo_persona'        => 'in_list[1,2]', // 1 : Natural , 2 : Juridica
+        'nombre_comercial' => [
+            'label' => ' ',
+            'rules' => 'required|max_length[150]|is_unique[compania.nombre_comercial,id,{$id}]',
+        ],
+	    'nombre_fiscal' => [
+            'label' => ' ',
+            'rules' => 'required|max_length[150]|is_unique[compania.nombre_fiscal,id,{$id}]',
+        ],
+        'num_ruc' => [
+            'label' => ' ',
+            'rules' => 'required|numeric|exact_length[11]|is_unique[compania.num_ruc,id,{$id}]',
+        ],        
+        'email' => [
+            'label' => ' ',
+            'rules' => 'required|regex_match[/^[\p{L}\d_.-]+@[\p{L}\d.-]+\.[\p{L}]{2,}$/u]|max_length[100]|is_unique[compania.email,id,{$id}]',
+        ],
+        'cell' => [
+            'label' => ' ',
+            'rules' => 'required|numeric|exact_length[9]',
+        ],
+        'idtipo_persona' => [
+            'label' => ' ',
+            'rules' => 'is_not_unique[tipo_persona.id]', // 1 : Natural , 2 : Juridica
+        ],        
         'estado'                => 'in_list[0,1]'
 	];
 	
