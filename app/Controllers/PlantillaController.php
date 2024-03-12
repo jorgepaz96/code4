@@ -28,41 +28,22 @@ class PlantillaController extends ResourceController
         try {            
             $jsonData = json_decode($jsonParam, true) ?? [];
 
-            if (empty($jsonData)) :
+            if (empty($jsonData)) {
                 return $this->failValidationError('No se proporcionaron datos válidos');
-            endif;
-            // Consulta de data
+            }
+
             $campoOrden = $jsonData['sortField'] ?? 'des_nombre';
-            $tipoOrden = $jsonData['sortOrder'] == '1' ? 'asc' : 'desc';
-            
-            $this->plantillaModel->select('id, des_nombre, estado');
-            
-            if (!empty($des_nombre)) :
-                $this->plantillaModel->like('des_nombre', $des_nombre, 'match');
-            endif;
+            $tipoOrden = $jsonData['sortOrder'] == '1' ? 'asc' : 'desc';            
 
-            if ($estado !== '100') :
-                $this->plantillaModel->where('estado', $estado);
-            endif;
-            
-            $data = $this->plantillaModel
-                ->orderBy($campoOrden, $tipoOrden)
-                ->offset($jsonData['first'] ?? 0)
-                ->limit($jsonData['rows'] ?? 10)
-                ->get()
-                ->getResult();
-            
-            // Consulta de total de registro
-            if (isset($des_nombre)) :
-                $this->plantillaModel->like('des_nombre', $des_nombre, 'match');
-            endif;
+            $respuesta = $this->plantillaModel->getPlantillas(
+                $des_nombre,
+                $estado,
+                $campoOrden,
+                $tipoOrden,
+                $jsonData['first'] ?? 0,
+                $jsonData['rows'] ?? 10
+            );
 
-            if ($estado !== '100') :
-                $this->plantillaModel->where('estado', $estado);
-            endif;
-            $totalRecords = $this->plantillaModel->countAllResults();
-
-            $respuesta = ["plantillas" => $data, "totalRecords" => $totalRecords];
             return $this->respond($respuesta, 200);
         } catch (\Exception $e) {
             // Handle exceptions
@@ -79,16 +60,12 @@ class PlantillaController extends ResourceController
     public function show($id = null)
     {        
         try {
-            $data = $this->plantillaModel
-                ->select('id, des_nombre, des_plantilla, estado')
-                ->where('id', $id)
-                ->first();
+            $data = $this->plantillaModel->getPlantillaById($id);
 
             if (!$data):
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
             endif;
             $data->estado = $data->estado === '1' ? true : false;
-
 
             return $this->respond($data, 200);
 
@@ -195,6 +172,34 @@ class PlantillaController extends ResourceController
                 return $this->failValidationErrors($this->plantillaModel->errors());
             endif;
         } catch (\Exception $e) {
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+    }
+    public function listaDespegableById($id = null)
+    {        
+        try {
+            $data = $this->plantillaModel->getPlantillaDespegableById($id);
+
+            if (!$data):
+                return $this->failNotFound('Registro no se encuentra en la base de datos');
+            endif;
+            return $this->respond($data, 200);
+
+        } catch (\Exception $e) {
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+
+    }
+    public function listaDespegable()
+    {
+        
+        $des_nombre = $this->request->getGet('des_nombre') ?? '';        
+
+        try {
+            $respuesta = $this->plantillaModel->getPlantillasDespegable($des_nombre);
+            return $this->respond($respuesta, 200);
+        } catch (\Exception $e) {
+            // Handle exceptions
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }
 

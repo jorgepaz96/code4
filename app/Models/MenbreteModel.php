@@ -2,15 +2,15 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
-use App\Entities\MuestraEntity;
+use App\Entities\MenbreteEntity;
 
-class MuestraModel extends Model
+class MenbreteModel extends Model
 {
-    protected $table = 'muestra';
+    protected $table = 'menbrete';
     protected $primaryKey = 'id';
-    protected $returnType = MuestraEntity::class;
+    protected $returnType = MenbreteEntity::class;
     
-    protected $allowedFields = ['des_nombre','estado'];
+    protected $allowedFields = ['des_nombre','des_ruta','estado'];
 
     // Dates
 	protected $useTimestamps        = true;
@@ -21,7 +21,7 @@ class MuestraModel extends Model
 
      // Validation
     protected $validationRules      = [
-	    'des_nombre' => 'required|max_length[150]|is_unique[muestra.des_nombre,id,{$id}]',
+	    'des_nombre' => 'required|max_length[250]|is_unique[muestra.des_nombre,id,{$id}]',
         'estado' => 'in_list[0,1]'
 	];
 	
@@ -44,9 +44,9 @@ class MuestraModel extends Model
         $data["data"]['aud_usuario_actualiza'] = 'jpazm';
         return $data;
     }
-    public function getMuestras($des_nombre = '', $estado = '100', $sortField = 'des_nombre', $sortOrder = 'asc', $offset = 0, $limit = 10)
+    public function getMenbretes($des_nombre = '', $estado = '100', $sortField = 'des_nombre', $sortOrder = 'asc', $offset = 0, $limit = 10)
     {
-        $this->select('id, des_nombre, estado');
+        $this->select('id, des_nombre, des_ruta, estado');
         $this->agregarFiltro($des_nombre, $estado);
         $data = $this
             ->orderBy($sortField, $sortOrder)
@@ -58,11 +58,11 @@ class MuestraModel extends Model
         $this->agregarFiltro($des_nombre, $estado);
         $totalRecords = $this->countAllResults();
 
-        return ["muestras" => $data, "totalRecords" => $totalRecords];
+        return ["menbrete" => $data, "totalRecords" => $totalRecords];
     }
-    public function getMuestraById($id)
+    public function getMenbreteById($id)
     {
-        return $this->select('id, des_nombre, estado')
+        return $this->select('id, des_nombre, des_ruta, estado')
             ->where('id', $id)
             ->first();
     }    

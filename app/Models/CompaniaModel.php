@@ -67,5 +67,64 @@ class CompaniaModel extends Model
         $data["data"]['aud_usuario_actualiza'] = 'jpazm';
         return $data;
     }
+
+    public function getCompanias($nombre_comercial = '', $estado = '100', $sortField = 'nombre_comercial', $sortOrder = 'asc', $offset = 0, $limit = 10)
+    {
+        $this->select('compania.id, compania.num_ruc, compania.nombre_comercial, compania.nombre_fiscal, compania.email, compania.cell, compania.estado, tipo_persona.des_nombre as tp_des_nombre')
+            ->join('tipo_persona', 'tipo_persona.id = compania.idtipo_persona');
+        $this->agregarFiltro($nombre_comercial, $estado, $sortField);
+        $data = $this
+            ->orderBy($sortField, $sortOrder)
+            ->offset($offset)
+            ->limit($limit)
+            ->get()
+            ->getResult();
+
+        $this->agregarFiltro($nombre_comercial, $estado, $sortField);
+        $totalRecords = $this->countAllResults();
+
+        return ["companias" => $data, "totalRecords" => $totalRecords];
+    }
+    public function getCompaniaById($id)
+    {
+        return $this
+            ->select('id, num_ruc, idtipo_persona as tipopersona, nombre_comercial, nombre_fiscal, email, cell, estado')                
+            ->where('id', $id)
+            ->first();
+    }
+    public function getCompaniasDespegable($nombre_comercial = '')
+    {    
+        $this->select('id, nombre_comercial');
+
+        if (!empty($nombre_comercial)) {
+            $this->like('nombre_comercial', $nombre_comercial, 'match');
+        }
+        $data = $this->orderBy('nombre_comercial', 'asc')
+            ->limit(15)
+            ->get()
+            ->getResult();
+        
+
+        return ["companias" => $data];
+    }
+    public function getCompaniaDespegableById($id)
+    {
+        return $this->select('id, nombre_comercial')
+            ->where('id', $id)
+            ->first();
+    }    
+
+    private function agregarFiltro($nombre_comercial = '', $estado = '100', $sortField = 'nombre_comercial')
+    {
+        if (!empty($nombre_comercial)) :
+            $this->like('compania.'.$sortField, $nombre_comercial, 'match');
+        endif;
+
+        if ($estado !== '100') :
+            $this->where('compania.estado', $estado);
+        endif;
+    }
+
+    
     
 }

@@ -1,26 +1,23 @@
 <?php
-
 namespace App\Controllers;
-
+ 
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 
-class ProcedenciaMuestraController extends ResourceController
+class EtiquetaController extends ResourceController
 {
     use ResponseTrait;
-    private $procedenciaMuestraModel;
+    private $etiquetaModel;
+    private $plantillaModel;
 
-    public function __construct()
-    {
-        $this->procedenciaMuestraModel = model('ProcedenciaMuestraModel');
+    public function __construct() {
+        $this->etiquetaModel = model('EtiquetaModel');
+        $this->plantillaModel = model('PlantillaModel');
     }
-    /**
-     * Return an array of resource objects, themselves in array format
-     *
-     * @return mixed
-     */
+    
     public function index()
-    {
+    {       
+        
         $des_nombre = $this->request->getGet('des_nombre') ?? '';
         $estado = $this->request->getGet('estado') ?? '100';
         $jsonParam = $this->request->getGet('tablaData') ?? '{}';
@@ -35,7 +32,7 @@ class ProcedenciaMuestraController extends ResourceController
             $campoOrden = $jsonData['sortField'] ?? 'des_nombre';
             $tipoOrden = $jsonData['sortOrder'] == '1' ? 'asc' : 'desc';            
 
-            $respuesta = $this->procedenciaMuestraModel->getProcedenciaMuestras(
+            $respuesta = $this->etiquetaModel->getEtiquetas(
                 $des_nombre,
                 $estado,
                 $campoOrden,
@@ -48,23 +45,19 @@ class ProcedenciaMuestraController extends ResourceController
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }
-
     }
-
-    /**
-     * Return the properties of a resource object
-     *
-     * @return mixed
-     */
+ 
+    // get single productW
     public function show($id = null)
     {
         try {
-            $data = $this->procedenciaMuestraModel->getProcedenciaMuestraById($id);
+            $data = $this->etiquetaModel->getEtiquetaById($id);
     
             if (!$data) {
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
             }
-    
+            $data->estado = $data->estado === '1' ? true : false;
+            $data->plantilla =  $this->plantillaModel->getPlantillaDespegableById($data->plantilla);
             return $this->respond($data, 200);
     
         } catch (\Exception $e) {
@@ -80,12 +73,19 @@ class ProcedenciaMuestraController extends ResourceController
             if (empty($json)):
                 return $this->failValidationError('No se proporcionaron datos');
             endif;
-            if ($this->procedenciaMuestraModel->save($json)):
-                $insertedID = $this->procedenciaMuestraModel->getInsertID();
-                $savedRecord = $this->procedenciaMuestraModel->find($insertedID);
+            $data = [                
+                'des_nombre' => $json->des_nombre,                
+                'estado' => $json->estado,
+            ];
+            if (!empty($json->plantilla) && !empty($json->plantilla->id)) {
+                $data['idplantilla'] = $json->plantilla->id;
+            }  
+            if ($this->etiquetaModel->save($data)):
+                $insertedID = $this->etiquetaModel->getInsertID();
+                $savedRecord = $this->etiquetaModel->find($insertedID);
                 return $this->respondCreated($savedRecord);
             else:
-                return $this->failValidationErrors($this->procedenciaMuestraModel->errors(),'Validación de formulario');
+                return $this->failValidationErrors($this->etiquetaModel->errors(),'Validación de formulario');
             endif;
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
@@ -96,7 +96,7 @@ class ProcedenciaMuestraController extends ResourceController
     public function update($id = null)
     {             
         try {
-            $data = $this->procedenciaMuestraModel->find($id);
+            $data = $this->etiquetaModel->find($id);
             if (!$data):
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
             endif;
@@ -106,7 +106,8 @@ class ProcedenciaMuestraController extends ResourceController
                 return $this->failResourceExists('No se proporcionaron datos');
             else:
                 $data->fill([
-                    'des_nombre' => $json->des_nombre ?? $data->des_nombre,                    
+                    'des_nombre' => $json->des_nombre ?? $data->des_nombre,
+                    'idplantilla' => $json->plantilla->id ?? $data->idplantilla,                    
                     'estado' => $json->estado ?? $data->estado
                 ]);
             endif;
@@ -116,11 +117,11 @@ class ProcedenciaMuestraController extends ResourceController
                 return $this->failResourceExists('No se encontraron cambios');
             endif;
 
-            if ($this->procedenciaMuestraModel->save($data)):
-                $savedRecord = $this->procedenciaMuestraModel->find($id);
+            if ($this->etiquetaModel->save($data)):
+                $savedRecord = $this->etiquetaModel->find($id);
                 return $this->respondUpdated($savedRecord);
             else:
-                return $this->failValidationErrors($this->procedenciaMuestraModel->errors());
+                return $this->failValidationErrors($this->etiquetaModel->errors());
             endif;
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
@@ -133,7 +134,7 @@ class ProcedenciaMuestraController extends ResourceController
     public function delete($id = null)
     {
         try {
-            $data = $this->procedenciaMuestraModel->find($id);
+            $data = $this->etiquetaModel->find($id);
             if (!$data):
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
             endif;
@@ -144,17 +145,47 @@ class ProcedenciaMuestraController extends ResourceController
                 return $this->failValidationError('No se encontraron cambios');
             endif;
 
-            $this->procedenciaMuestraModel->cleanValidationRules;
+            $this->etiquetaModel->cleanValidationRules;
 
 
-            if ($this->procedenciaMuestraModel->save($data)):
-                $savedRecord = $this->procedenciaMuestraModel->find($id);
+            if ($this->etiquetaModel->save($data)):
+                $savedRecord = $this->etiquetaModel->find($id);
                 return $this->respondUpdated($savedRecord);
             else:
-                return $this->failValidationErrors($this->procedenciaMuestraModel->errors());
+                return $this->failValidationErrors($this->etiquetaModel->errors());
             endif;
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }  
+    }
+
+    public function listaDespegableById($id = null)
+    {        
+        try {
+            $data = $this->etiquetaModel->getEtiquetaDespegableById($id);
+
+            if (!$data):
+                return $this->failNotFound('Registro no se encuentra en la base de datos');
+            endif;
+            return $this->respond($data, 200);
+
+        } catch (\Exception $e) {
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+
+    }
+    public function listaDespegable()
+    {
+        
+        $des_nombre = $this->request->getGet('des_nombre') ?? '';        
+
+        try {
+            $respuesta = $this->etiquetaModel->getEtiquetasDespegable($des_nombre);
+            return $this->respond($respuesta, 200);
+        } catch (\Exception $e) {
+            // Handle exceptions
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+
     }
 }

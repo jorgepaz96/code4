@@ -2,15 +2,15 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
-use App\Entities\MuestraEntity;
+use App\Entities\EstudioEntity;
 
-class MuestraModel extends Model
+class EstudioModel extends Model
 {
-    protected $table = 'muestra';
+    protected $table = 'estudio';
     protected $primaryKey = 'id';
-    protected $returnType = MuestraEntity::class;
+    protected $returnType = EstudioEntity::class;
     
-    protected $allowedFields = ['des_nombre','estado'];
+    protected $allowedFields = ['des_nombre','des_nombre_abrev','estado'];
 
     // Dates
 	protected $useTimestamps        = true;
@@ -21,7 +21,7 @@ class MuestraModel extends Model
 
      // Validation
     protected $validationRules      = [
-	    'des_nombre' => 'required|max_length[150]|is_unique[muestra.des_nombre,id,{$id}]',
+	    'des_nombre' => 'required|max_length[150]|is_unique[estudio.des_nombre,id,{$id}]',
         'estado' => 'in_list[0,1]'
 	];
 	
@@ -44,9 +44,9 @@ class MuestraModel extends Model
         $data["data"]['aud_usuario_actualiza'] = 'jpazm';
         return $data;
     }
-    public function getMuestras($des_nombre = '', $estado = '100', $sortField = 'des_nombre', $sortOrder = 'asc', $offset = 0, $limit = 10)
+    public function getEstudios($des_nombre = '', $estado = '100', $sortField = 'des_nombre', $sortOrder = 'asc', $offset = 0, $limit = 10)
     {
-        $this->select('id, des_nombre, estado');
+        $this->select('id, des_nombre, des_nombre_abrev,  estado');
         $this->agregarFiltro($des_nombre, $estado);
         $data = $this
             ->orderBy($sortField, $sortOrder)
@@ -58,14 +58,35 @@ class MuestraModel extends Model
         $this->agregarFiltro($des_nombre, $estado);
         $totalRecords = $this->countAllResults();
 
-        return ["muestras" => $data, "totalRecords" => $totalRecords];
+        return ["estudios" => $data, "totalRecords" => $totalRecords];
     }
-    public function getMuestraById($id)
+    public function getEstudioById($id)
     {
-        return $this->select('id, des_nombre, estado')
+        return $this->select('id, des_nombre, des_nombre, estado')
             ->where('id', $id)
             ->first();
-    }    
+    }
+    public function getEstudiosDespegable($des_nombre = '')
+    {    
+        $this->select('id, des_nombre');
+
+        if (!empty($des_nombre)) {
+            $this->like('des_nombre', $des_nombre, 'match');
+        }
+        $data = $this->orderBy('des_nombre', 'asc')
+            ->limit(15)
+            ->get()
+            ->getResult();
+        
+
+        return ["estudios" => $data];
+    }
+    public function getEstudioDespegableById($id)
+    {
+        return $this->select('id, des_nombre')
+            ->where('id', $id)
+            ->first();
+    }
 
     private function agregarFiltro($des_nombre = '', $estado = '100')
     {

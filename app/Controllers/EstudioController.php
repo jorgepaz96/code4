@@ -1,26 +1,21 @@
 <?php
-
 namespace App\Controllers;
-
+ 
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 
-class ProcedenciaMuestraController extends ResourceController
+class EstudioController extends ResourceController
 {
     use ResponseTrait;
-    private $procedenciaMuestraModel;
+    private $estudioModel;
 
-    public function __construct()
-    {
-        $this->procedenciaMuestraModel = model('ProcedenciaMuestraModel');
+    public function __construct() {
+        $this->estudioModel = model('MuestraModel');
     }
-    /**
-     * Return an array of resource objects, themselves in array format
-     *
-     * @return mixed
-     */
+    
     public function index()
-    {
+    {       
+        
         $des_nombre = $this->request->getGet('des_nombre') ?? '';
         $estado = $this->request->getGet('estado') ?? '100';
         $jsonParam = $this->request->getGet('tablaData') ?? '{}';
@@ -35,7 +30,7 @@ class ProcedenciaMuestraController extends ResourceController
             $campoOrden = $jsonData['sortField'] ?? 'des_nombre';
             $tipoOrden = $jsonData['sortOrder'] == '1' ? 'asc' : 'desc';            
 
-            $respuesta = $this->procedenciaMuestraModel->getProcedenciaMuestras(
+            $respuesta = $this->estudioModel->getMuestras(
                 $des_nombre,
                 $estado,
                 $campoOrden,
@@ -48,22 +43,18 @@ class ProcedenciaMuestraController extends ResourceController
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }
-
     }
-
-    /**
-     * Return the properties of a resource object
-     *
-     * @return mixed
-     */
+ 
+    // get single productW
     public function show($id = null)
     {
         try {
-            $data = $this->procedenciaMuestraModel->getProcedenciaMuestraById($id);
+            $data = $this->estudioModel->getMuestraById($id);
     
             if (!$data) {
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
             }
+            $data->estado = $data->estado === '1' ? true : false;
     
             return $this->respond($data, 200);
     
@@ -80,12 +71,12 @@ class ProcedenciaMuestraController extends ResourceController
             if (empty($json)):
                 return $this->failValidationError('No se proporcionaron datos');
             endif;
-            if ($this->procedenciaMuestraModel->save($json)):
-                $insertedID = $this->procedenciaMuestraModel->getInsertID();
-                $savedRecord = $this->procedenciaMuestraModel->find($insertedID);
+            if ($this->estudioModel->save($json)):
+                $insertedID = $this->estudioModel->getInsertID();
+                $savedRecord = $this->estudioModel->find($insertedID);
                 return $this->respondCreated($savedRecord);
             else:
-                return $this->failValidationErrors($this->procedenciaMuestraModel->errors(),'Validación de formulario');
+                return $this->failValidationErrors($this->estudioModel->errors(),'Validación de formulario');
             endif;
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
@@ -96,7 +87,7 @@ class ProcedenciaMuestraController extends ResourceController
     public function update($id = null)
     {             
         try {
-            $data = $this->procedenciaMuestraModel->find($id);
+            $data = $this->estudioModel->find($id);
             if (!$data):
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
             endif;
@@ -116,11 +107,11 @@ class ProcedenciaMuestraController extends ResourceController
                 return $this->failResourceExists('No se encontraron cambios');
             endif;
 
-            if ($this->procedenciaMuestraModel->save($data)):
-                $savedRecord = $this->procedenciaMuestraModel->find($id);
+            if ($this->estudioModel->save($data)):
+                $savedRecord = $this->estudioModel->find($id);
                 return $this->respondUpdated($savedRecord);
             else:
-                return $this->failValidationErrors($this->procedenciaMuestraModel->errors());
+                return $this->failValidationErrors($this->estudioModel->errors());
             endif;
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
@@ -133,7 +124,7 @@ class ProcedenciaMuestraController extends ResourceController
     public function delete($id = null)
     {
         try {
-            $data = $this->procedenciaMuestraModel->find($id);
+            $data = $this->estudioModel->find($id);
             if (!$data):
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
             endif;
@@ -144,17 +135,46 @@ class ProcedenciaMuestraController extends ResourceController
                 return $this->failValidationError('No se encontraron cambios');
             endif;
 
-            $this->procedenciaMuestraModel->cleanValidationRules;
+            $this->estudioModel->cleanValidationRules;
 
 
-            if ($this->procedenciaMuestraModel->save($data)):
-                $savedRecord = $this->procedenciaMuestraModel->find($id);
+            if ($this->estudioModel->save($data)):
+                $savedRecord = $this->estudioModel->find($id);
                 return $this->respondUpdated($savedRecord);
             else:
-                return $this->failValidationErrors($this->procedenciaMuestraModel->errors());
+                return $this->failValidationErrors($this->estudioModel->errors());
             endif;
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }  
+    }
+    public function listaDespegableById($id = null)
+    {        
+        try {
+            $data = $this->estudioModel->getEstudioDespegableById($id);
+
+            if (!$data):
+                return $this->failNotFound('Registro no se encuentra en la base de datos');
+            endif;
+            return $this->respond($data, 200);
+
+        } catch (\Exception $e) {
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+
+    }
+    public function listaDespegable()
+    {
+        
+        $des_nombre = $this->request->getGet('des_nombre') ?? '';        
+
+        try {
+            $respuesta = $this->estudioModel->getEstudiosDespegable($des_nombre);
+            return $this->respond($respuesta, 200);
+        } catch (\Exception $e) {
+            // Handle exceptions
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+
     }
 }

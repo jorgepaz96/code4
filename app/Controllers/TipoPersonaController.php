@@ -25,21 +25,16 @@ class TipoPersonaController extends ResourceController
 
             $respuesta = ["tipopersonas" => $data, "totalRecords" => $totalRecords];
             return $this->respond($respuesta, 200);
-        } catch (\Exception $e) {
-            // Handle exceptions
+        } catch (\Exception $e) {            
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }
-    }
- 
-    // get single productW
+    } 
+    
     public function show($id = null)
-    {
+    {        
         try {
-            $data = $this->tipoPersonaModel
-                ->select('id, des_nombre')
-                ->where('id', $id)
-                ->first();
-
+            $data = $this->tipoPersonaModel->getTipoPersonaById($id);
+            
             if (!$data):
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
             endif;
@@ -47,6 +42,14 @@ class TipoPersonaController extends ResourceController
             return $this->respond($data, 200);
 
         } catch (\Exception $e) {
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+    }
+    public function getTodos() {        
+        try { 
+            $data = $this->tipoPersonaModel->getTipoPersonaTodos();                        
+            return $this->respond(["tipopersonas"=>$data], 200);
+        } catch (\Exception $e) {            
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }
     }

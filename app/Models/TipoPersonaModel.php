@@ -12,5 +12,19 @@ class TipoPersonaModel extends Model
     protected $returnType = TipoPersonaEntity::class;
     
     protected $allowedFields = ['des_nombre','estado'];
+
+    public function getTipoPersonaById($id)
+    {
+        return $this->select('id, des_nombre, estado')
+            ->where('id', $id)
+            ->first();
+    }
+    public function getTipoPersonaTodos()
+    {
+        return $this
+            ->select('id, des_nombre, estado')                
+            ->get()
+            ->getResult();
+    }  
     
 }

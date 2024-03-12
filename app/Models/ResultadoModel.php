@@ -3,17 +3,17 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
-use App\Entities\PlantillaEntity;
+use App\Entities\ResultadoEntity;
 
-class PlantillaModel extends Model
+class ResultadoModel extends Model
 {
-    protected $table = 'plantilla';
+    protected $table = 'resultado';
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
-    protected $returnType = PlantillaEntity::class;
+    protected $returnType = ResultadoEntity::class;
     protected $useSoftDeletes = false;
     protected $protectFields = true;
-    protected $allowedFields = ['des_nombre', 'des_plantilla', 'estado'];
+    protected $allowedFields = ['des_resultado', 'idetiqueta', 'estado'];
 
     // Dates
     protected $useTimestamps = false;
@@ -24,11 +24,7 @@ class PlantillaModel extends Model
 
     // Validation
     protected $validationRules = [
-
-        'des_nombre' => [
-            'label' => ' ',
-            'rules' => 'required|max_length[100]|is_unique[plantilla.des_nombre,id,{$id}]'
-        ],        
+                
         'estado' => 'in_list[0,1]'
     ];
     protected $validationMessages = [];
@@ -58,59 +54,57 @@ class PlantillaModel extends Model
         return $data;
     }
 
-    public function getPlantillas($des_nombre = '', $estado = '100', $sortField = 'des_nombre', $sortOrder = 'asc', $offset = 0, $limit = 10)
+    public function getResultados($idetiqueta = '',$des_resultado = '', $estado = '100', $sortField = 'des_resultado', $sortOrder = 'asc', $offset = 0, $limit = 10)
     {
-        $this->select('id, des_nombre, estado');
-        $this->agregarFiltro($des_nombre, $estado);
-        $data = $this
-            ->orderBy($sortField, $sortOrder)
+        $this->select('resultado.id, resultado.des_resultado, resultado.idetiqueta, etiqueta.des_nombre as e_des_nombre , resultado.estado')
+        ->join('etiqueta', 'etiqueta.id = resultado.idetiqueta');
+        $this->agregarFiltro($idetiqueta,$estado);
+        $data = $this            
             ->offset($offset)
             ->limit($limit)
             ->get()
             ->getResult();
 
-        $this->agregarFiltro($des_nombre, $estado);
+        $this->agregarFiltro($idetiqueta,$estado);
         $totalRecords = $this->countAllResults();
 
-        return ["plantillas" => $data, "totalRecords" => $totalRecords];
+        return ["resultados" => $data, "totalRecords" => $totalRecords];
     }
-    public function getPlantillaById($id)
+    public function getResultadoById($id)
     {
-        return $this->select('id, des_nombre, des_plantilla, estado')
+        return $this->select('id, des_resultado, idetiqueta as etiqueta, estado')
             ->where('id', $id)
             ->first();
     }
 
-    public function getPlantillasDespegable($des_nombre = '')
+    public function getResultadosDespegable($des_resultado = '')
     {    
-        $this->select('id, des_nombre');
+        $this->select('id, des_resultado');
 
-        if (!empty($des_nombre)) {
-            $this->like('des_nombre', $des_nombre, 'match');
+        if (!empty($des_resultado)) {
+            $this->like('des_resultado', $des_resultado, 'match');
         }
-        $data = $this->orderBy('des_nombre', 'asc')
-            ->limit(15)
+        $data = $this->limit(15)
             ->get()
             ->getResult();
         
 
-        return ["plantillas" => $data];
+        return ["resultados" => $data];
     }
-    public function getPlantillaDespegableById($id)
+    public function getResultadoDespegableById($id)
     {
-        return $this->select('id, des_nombre')
+        return $this->select('id, des_resultado')
             ->where('id', $id)
             ->first();
     }
 
-    private function agregarFiltro($des_nombre = '', $estado = '100')
-    {
-        if (!empty($des_nombre)) {
-            $this->like('des_nombre', $des_nombre, 'match');
+    private function agregarFiltro($idetiqueta = '', $estado = '100')
+    {  
+        if (!empty($idetiqueta)) {
+            $this->where('resultado.idetiqueta', $idetiqueta);
         }
-
         if ($estado !== '100') {
-            $this->where('estado', $estado);
+            $this->where('resultado.estado', $estado);
         }
     }
 }

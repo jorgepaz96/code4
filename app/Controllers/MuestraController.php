@@ -20,47 +20,27 @@ class MuestraController extends ResourceController
         $estado = $this->request->getGet('estado') ?? '100';
         $jsonParam = $this->request->getGet('tablaData') ?? '{}';
 
-        try {            
+        try {
             $jsonData = json_decode($jsonParam, true) ?? [];
 
-            if (empty($jsonData)) :
+            if (empty($jsonData)) {
                 return $this->failValidationError('No se proporcionaron datos válidos');
-            endif;
-            // Consulta de data
+            }
+
             $campoOrden = $jsonData['sortField'] ?? 'des_nombre';
-            $tipoOrden = $jsonData['sortOrder'] == '1' ? 'asc' : 'desc';
-            
-            $this->muestraModel->select('id, des_nombre, estado');
-            
-            if (!empty($des_nombre)) :
-                $this->muestraModel->like('des_nombre', $des_nombre, 'match');
-            endif;
+            $tipoOrden = $jsonData['sortOrder'] == '1' ? 'asc' : 'desc';            
 
-            if ($estado !== '100') :
-                $this->muestraModel->where('estado', $estado);
-            endif;
-            
-            $data = $this->muestraModel
-                ->orderBy($campoOrden, $tipoOrden)
-                ->offset($jsonData['first'] ?? 0)
-                ->limit($jsonData['rows'] ?? 10)
-                ->get()
-                ->getResult();
-            
-            // Consulta de total de registro
-            if (isset($des_nombre)) :
-                $this->muestraModel->like('des_nombre', $des_nombre, 'match');
-            endif;
+            $respuesta = $this->muestraModel->getMuestras(
+                $des_nombre,
+                $estado,
+                $campoOrden,
+                $tipoOrden,
+                $jsonData['first'] ?? 0,
+                $jsonData['rows'] ?? 10
+            );
 
-            if ($estado !== '100') :
-                $this->muestraModel->where('estado', $estado);
-            endif;
-            $totalRecords = $this->muestraModel->countAllResults();
-
-            $respuesta = ["muestras" => $data, "totalRecords" => $totalRecords];
             return $this->respond($respuesta, 200);
         } catch (\Exception $e) {
-            // Handle exceptions
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }
     }
@@ -69,19 +49,15 @@ class MuestraController extends ResourceController
     public function show($id = null)
     {
         try {
-            $data = $this->muestraModel
-                ->select('id, des_nombre, estado')
-                ->where('id', $id)
-                ->first();
-
-            if (!$data):
+            $data = $this->muestraModel->getMuestraById($id);
+    
+            if (!$data) {
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
-            endif;
+            }
             $data->estado = $data->estado === '1' ? true : false;
-
-
+    
             return $this->respond($data, 200);
-
+    
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }

@@ -4,20 +4,20 @@ namespace App\Controllers;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 
-class CompaniaController extends ResourceController
+class MedicoController extends ResourceController
 {
     use ResponseTrait;
-    private $companiaModel;
-    private $tipoPersonaModel;
+    private $medicoModel;
+    private $profesionModel;
 
     public function __construct() {
-        $this->companiaModel = model('CompaniaModel');
-        $this->tipoPersonaModel = model('TipoPersonaModel');
+        $this->medicoModel = model('MedicoModel');
+        $this->profesionModel = model('ProfesionModel');
     }
     
     public function index()
     {   
-        $nombre_comercial = $this->request->getGet('nombre_comercial') ?? '';
+        $des_nombre_completo = $this->request->getGet('des_nombre_completo') ?? '';
         $estado = $this->request->getGet('estado') ?? '100';
         $jsonParam = $this->request->getGet('tablaData') ?? '{}';
 
@@ -29,11 +29,11 @@ class CompaniaController extends ResourceController
                 return $this->failValidationError('No se proporcionaron datos válidos');
             }
 
-            $campoOrden = $jsonData['sortField'] ?? 'nombre_comercial';
+            $campoOrden = $jsonData['sortField'] ?? 'des_nombre_completo';
             $tipoOrden = $jsonData['sortOrder'] == '1' ? 'asc' : 'desc';            
 
-            $respuesta = $this->companiaModel->getCompanias(
-                $nombre_comercial,
+            $respuesta = $this->medicoModel->getMedicos(
+                $des_nombre_completo,
                 $estado,
                 $campoOrden,
                 $tipoOrden,
@@ -51,12 +51,12 @@ class CompaniaController extends ResourceController
     public function show($id = null)
     {        
         try {
-            $data = $this->companiaModel->getCompaniaById($id);    
+            $data = $this->medicoModel->getMedicoById($id);    
             if (!$data) {
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
             }
             $data->estado = $data->estado === '1' ? true : false;
-            $data->tipopersona = $this->tipoPersonaModel->getTipoPersonaById($data->tipopersona);
+            $data->profesion = $this->profesionModel->getProfesionById($data->profesion);
             return $this->respond($data, 200);
 
         } catch (\Exception $e) {
@@ -72,21 +72,27 @@ class CompaniaController extends ResourceController
             if (empty($json)):
                 return $this->failValidationError('No se proporcionaron datos');
             endif;
-            $data = [
-                'num_ruc' => $json->num_ruc,
-                'idtipo_persona' => $json->tipopersona->id,
-                'nombre_comercial' => $json->nombre_comercial,
-                'nombre_fiscal' => $json->nombre_fiscal,
-                'email' => $json->email,
+
+            $des_nombre_completo = trim($json->ape_pat).' '.trim($json->ape_mat).' '.trim($json->des_nombre);
+            
+            $data = [                
+                'des_nombre' => $json->des_nombre,
+                'ape_pat' => $json->ape_pat,
+                'ape_mat' => $json->ape_mat,
+                'des_nombre_completo' => $des_nombre_completo,
+                'idprofesion' => $json->profesion->id,
+                'sexo' => $json->sexo->cod,
                 'cell' => $json->cell,
-                'estado' => $json->estado,                
-            ];                       
-            if ($this->companiaModel->save($data)):
-                $insertedID = $this->companiaModel->getInsertID();
-                $savedRecord = $this->companiaModel->find($insertedID);
+                'telefono' => $json->telefono,
+                'email' => $json->email,
+                'estado' => $json->estado                            
+            ];                                 
+            if ($this->medicoModel->save($data)):
+                $insertedID = $this->medicoModel->getInsertID();
+                $savedRecord = $this->medicoModel->find($insertedID);
                 return $this->respondCreated($savedRecord);
             else:
-                return $this->failValidationErrors($this->companiaModel->errors(),'Validación de formulario');
+                return $this->failValidationErrors($this->medicoModel->errors(),'Validación de formulario');
             endif;
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
@@ -97,7 +103,7 @@ class CompaniaController extends ResourceController
     public function update($id = null)
     {
         try {
-            $data = $this->companiaModel->find($id);
+            $data = $this->medicoModel->find($id);
             if (!$data):
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
             endif;
@@ -106,14 +112,19 @@ class CompaniaController extends ResourceController
             if (empty($json)):
                 return $this->failResourceExists('No se proporcionaron datos');
             else:
+                $des_nombre_completo = trim($json->ape_pat).' '.trim($json->ape_mat).' '.trim($json->des_nombre);
+
                 $data->fill([
-                    'num_ruc' => $json->num_ruc ?? $data->num_ruc,
-                    'idtipo_persona' => $json->tipopersona->id ?? $data->idtipo_persona,
-                    'nombre_comercial' => $json->nombre_comercial ?? $data->nombre_comercial,
-                    'nombre_fiscal' => $json->nombre_fiscal ?? $data->nombre_fiscal,
+                    'des_nombre' => $json->des_nombre ?? $data->des_nombre,
+                    'ape_pat' => $json->ape_pat ?? $data->ape_pat,
+                    'ape_mat' => $json->ape_mat ?? $data->ape_mat,
+                    'des_nombre_completo' => $des_nombre_completo ?? $data->des_nombre_completo,
+                    'idprofesion' => $json->profesion->id ?? $data->idprofesion,
+                    'sexo' => $json->sexo->cod ?? $data->sexo,
+                    'cell' => $json->cell ?? $data->cell,
+                    'telefono' => $json->telefono ?? $data->telefono,
                     'email' => $json->email ?? $data->email,
-                    'cell' => $json->cell ?? $data->cell,                    
-                    'estado' => $json->estado ?? $data->estado
+                    'estado' => $json->estado ?? $data->estado                              
                 ]);
             endif;
 
@@ -122,11 +133,11 @@ class CompaniaController extends ResourceController
                 return $this->failResourceExists('No se encontraron cambios');
             endif;
 
-            if ($this->companiaModel->save($data)):
-                $savedRecord = $this->companiaModel->find($id);
+            if ($this->medicoModel->save($data)):
+                $savedRecord = $this->medicoModel->find($id);
                 return $this->respondUpdated($savedRecord);
             else:
-                return $this->failValidationErrors($this->companiaModel->errors());
+                return $this->failValidationErrors($this->medicoModel->errors());
             endif;
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
@@ -137,7 +148,7 @@ class CompaniaController extends ResourceController
     public function delete($id = null)
     {
         try {
-            $data = $this->companiaModel->find($id);
+            $data = $this->medicoModel->find($id);
             if (!$data):
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
             endif;
@@ -148,30 +159,22 @@ class CompaniaController extends ResourceController
                 return $this->failValidationError('No se encontraron cambios');
             endif;
 
-            $this->companiaModel->cleanValidationRules;
+            $this->medicoModel->cleanValidationRules;
 
-            if ($this->companiaModel->save($data)):
-                $savedRecord = $this->companiaModel->find($id);
+            if ($this->medicoModel->save($data)):
+                $savedRecord = $this->medicoModel->find($id);
                 return $this->respondUpdated($savedRecord);
             else:
-                return $this->failValidationErrors($this->companiaModel->errors());
+                return $this->failValidationErrors($this->medicoModel->errors());
             endif;
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }           
     }
-    private function getTipoPersona($id = null):object | null{
-        $tipoPersonaModel = model('TipoPersonaModel');
-        $data = $tipoPersonaModel
-                ->select('id, des_nombre')
-                ->where('id', $id)
-                ->first();
-        return $data;
-    }
     public function listaDespegableById($id = null)
     {        
         try {
-            $data = $this->companiaModel->getCompaniaDespegableById($id);
+            $data = $this->medicoModel->getMedicoDespegableById($id);
 
             if (!$data):
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
@@ -186,10 +189,10 @@ class CompaniaController extends ResourceController
     public function listaDespegable()
     {
         
-        $nombre_comercial = $this->request->getGet('nombre_comercial') ?? '';        
+        $des_nombre_completo = $this->request->getGet('des_nombre_completo') ?? '';        
 
         try {
-            $respuesta = $this->companiaModel->getCompaniasDespegable($nombre_comercial);
+            $respuesta = $this->medicoModel->getMedicosDespegable($des_nombre_completo);
             return $this->respond($respuesta, 200);
         } catch (\Exception $e) {
             // Handle exceptions

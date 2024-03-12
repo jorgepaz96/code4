@@ -2,15 +2,15 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
-use App\Entities\ExamenEntity;
+use App\Entities\EtiquetaEntity;
 
-class ExamenModel extends Model
+class EtiquetaModel extends Model
 {
-    protected $table = 'examen';
+    protected $table = 'etiqueta';
     protected $primaryKey = 'id';
-    protected $returnType = ExamenEntity::class;
+    protected $returnType = EtiquetaEntity::class;
 
-    protected $allowedFields = ['des_nombre', 'estado'];
+    protected $allowedFields = ['des_nombre', 'idplantilla', 'estado'];
 
     // Dates
     protected $useTimestamps = true;
@@ -23,7 +23,7 @@ class ExamenModel extends Model
     protected $validationRules = [
         'des_nombre' => [
             'label' => ' ',
-            'rules' => 'required|max_length[150]|is_unique[examen.des_nombre,id,{$id}]'
+            'rules' => 'required|max_length[150]|is_unique[etiqueta.des_nombre,id,{$id}]',
         ],
         'estado' => 'in_list[0,1]'
     ];
@@ -47,10 +47,10 @@ class ExamenModel extends Model
         $data["data"]['aud_usuario_actualiza'] = 'jpazm';
         return $data;
     }
-
-    public function getExamenes($des_nombre = '', $estado = '100', $sortField = 'des_nombre', $sortOrder = 'asc', $offset = 0, $limit = 10)
+    public function getEtiquetas($des_nombre = '', $estado = '100', $sortField = 'des_nombre', $sortOrder = 'asc', $offset = 0, $limit = 10)
     {
-        $this->select('id, des_nombre, estado');
+        $this->select('etiqueta.id, etiqueta.des_nombre, plantilla.des_nombre as p_des_nombre, etiqueta.estado')
+            ->join('plantilla', 'plantilla.id = etiqueta.idplantilla','left');
         $this->agregarFiltro($des_nombre, $estado);
         $data = $this
             ->orderBy($sortField, $sortOrder)
@@ -62,23 +62,45 @@ class ExamenModel extends Model
         $this->agregarFiltro($des_nombre, $estado);
         $totalRecords = $this->countAllResults();
 
-        return ["examenes" => $data, "totalRecords" => $totalRecords];
+        return ["etiquetas" => $data, "totalRecords" => $totalRecords];
     }
-    public function getExamenById($id)
+    public function getEtiquetaById($id)
     {
-        return $this->select('id, des_nombre, estado')
+        return $this->select('id, des_nombre, idplantilla as plantilla, estado')
             ->where('id', $id)
             ->first();
-    }    
+    }
+
+    public function getEtiquetasDespegable($des_nombre = '')
+    {    
+        $this->select('id, des_nombre');
+
+        if (!empty($des_nombre)) {
+            $this->like('des_nombre', $des_nombre, 'match');
+        }
+        $data = $this->orderBy('des_nombre', 'asc')
+            ->limit(15)
+            ->get()
+            ->getResult();
+        
+
+        return ["etiquetas" => $data];
+    }
+    public function getEtiquetaDespegableById($id)
+    {
+        return $this->select('id, des_nombre')
+            ->where('id', $id)
+            ->first();
+    }
 
     private function agregarFiltro($des_nombre = '', $estado = '100')
     {
         if (!empty($des_nombre)) {
-            $this->like('des_nombre', $des_nombre, 'match');
+            $this->like('etiqueta.des_nombre', $des_nombre, 'match');
         }
 
         if ($estado !== '100') {
-            $this->where('estado', $estado);
+            $this->where('etiqueta.estado', $estado);
         }
     }
 
