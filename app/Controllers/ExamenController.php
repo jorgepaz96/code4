@@ -55,7 +55,7 @@ class ExamenController extends ResourceController
             if (!$data) {
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
             }
-    
+            $data->estado = $data->estado === '1' ? true : false;
             return $this->respond($data, 200);
     
         } catch (\Exception $e) {
@@ -146,5 +146,47 @@ class ExamenController extends ResourceController
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }
+    }
+    public function listaDespegableById($id = null)
+    {        
+        try {
+            $data = $this->examenModel->getExamenDespegableById($id);
+
+            if (!$data):
+                return $this->failNotFound('Registro no se encuentra en la base de datos');
+            endif;
+            return $this->respond($data, 200);
+
+        } catch (\Exception $e) {
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+
+    }
+    public function listaDespegable()
+    {
+        
+        $des_nombre = $this->request->getGet('des_nombre') ?? '';        
+
+        try {
+            $respuesta = $this->examenModel->getExamenesDespegable($des_nombre);
+            return $this->respond($respuesta, 200);
+        } catch (\Exception $e) {
+            // Handle exceptions
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+
+    }
+    public function getExamenTarifarioPrecio($id,$idperfiltarifario){
+        
+        try {
+            $db = \Config\Database::connect();        
+            $query = $db->query("SELECT IFNULL(f_get_precio_examen($id,$idperfiltarifario),0.00) AS precio");        
+            $result = $query->getRow();                    
+            return $this->respond(["precio"=>$result->precio], 200);            
+        } catch (\Exception $e) {
+            // Handle exceptions
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+        
     }
 }

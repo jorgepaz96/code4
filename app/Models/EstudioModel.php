@@ -43,29 +43,7 @@ class EstudioModel extends Model
     {        
         $data["data"]['aud_usuario_actualiza'] = 'jpazm';
         return $data;
-    }
-    public function getEstudios($des_nombre = '', $estado = '100', $sortField = 'des_nombre', $sortOrder = 'asc', $offset = 0, $limit = 10)
-    {
-        $this->select('id, des_nombre, des_nombre_abrev,  estado');
-        $this->agregarFiltro($des_nombre, $estado);
-        $data = $this
-            ->orderBy($sortField, $sortOrder)
-            ->offset($offset)
-            ->limit($limit)
-            ->get()
-            ->getResult();
-
-        $this->agregarFiltro($des_nombre, $estado);
-        $totalRecords = $this->countAllResults();
-
-        return ["estudios" => $data, "totalRecords" => $totalRecords];
-    }
-    public function getEstudioById($id)
-    {
-        return $this->select('id, des_nombre, des_nombre, estado')
-            ->where('id', $id)
-            ->first();
-    }
+    }   
     public function getEstudiosDespegable($des_nombre = '')
     {    
         $this->select('id, des_nombre');
@@ -86,17 +64,6 @@ class EstudioModel extends Model
         return $this->select('id, des_nombre')
             ->where('id', $id)
             ->first();
-    }
-
-    private function agregarFiltro($des_nombre = '', $estado = '100')
-    {
-        if (!empty($des_nombre)) {
-            $this->like('des_nombre', $des_nombre, 'match');
-        }
-
-        if ($estado !== '100') {
-            $this->where('estado', $estado);
-        }
-    }
+    }    
     
 }

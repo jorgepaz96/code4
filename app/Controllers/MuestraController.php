@@ -148,4 +148,33 @@ class MuestraController extends ResourceController
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }  
     }
+    public function listaDespegableById($id = null)
+    {        
+        try {
+            $data = $this->muestraModel->getMuestraDespegableById($id);
+
+            if (!$data):
+                return $this->failNotFound('Registro no se encuentra en la base de datos');
+            endif;
+            return $this->respond($data, 200);
+
+        } catch (\Exception $e) {
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+
+    }
+    public function listaDespegable()
+    {
+        
+        $des_nombre = $this->request->getGet('des_nombre') ?? '';        
+
+        try {
+            $respuesta = $this->muestraModel->getMuestrasDespegable($des_nombre);
+            return $this->respond($respuesta, 200);
+        } catch (\Exception $e) {
+            // Handle exceptions
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+
+    }
 }

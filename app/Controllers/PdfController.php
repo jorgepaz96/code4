@@ -34,7 +34,14 @@ class PdfController extends BaseController
         $dompdf->render();
 
         // Se muestra el PDF en el navegador
-        $dompdf->stream("sample.pdf", array("Attachment" => false));
+        // Obtener el contenido del PDF como cadena
+        $output = $dompdf->output();
+
+        // Convertir el contenido del PDF a base64
+        $pdfBase64 = base64_encode($output);
+
+        // Retornar el PDF en base64
+        return $pdfBase64;
 
     }
 

@@ -78,8 +78,29 @@ class ProcedenciaMuestraModel extends Model
         return $this->select('id, des_nombre, estado')
             ->where('id', $id)
             ->first();
-    }    
+    }
 
+    public function getProcedenciaMuestrasDespegable($des_nombre = '')
+    {    
+        $this->select('id, des_nombre');
+
+        if (!empty($des_nombre)) {
+            $this->like('des_nombre', $des_nombre, 'match');
+        }
+        $data = $this->orderBy('des_nombre', 'asc')
+            ->limit(15)
+            ->get()
+            ->getResult();
+        
+
+        return ["procedenciamuestras" => $data];
+    }
+    public function getProcedenciaMuestraDespegableById($id)
+    {
+        return $this->select('id, des_nombre')
+            ->where('id', $id)
+            ->first();
+    }
     private function agregarFiltro($des_nombre = '', $estado = '100')
     {
         if (!empty($des_nombre)) {

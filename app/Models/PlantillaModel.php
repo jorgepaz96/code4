@@ -89,7 +89,7 @@ class PlantillaModel extends Model
             $this->like('des_nombre', $des_nombre, 'match');
         }
         $data = $this->orderBy('des_nombre', 'asc')
-            ->limit(15)
+            ->limit(25)
             ->get()
             ->getResult();
         

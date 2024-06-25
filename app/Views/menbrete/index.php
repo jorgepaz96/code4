@@ -3,7 +3,7 @@
 
 <head>
 	<meta charset="UTF-8">
-	<title>Sample PDF</title>
+	<title><?= $titulo ?></title>
 	<style>
 		* {
 			font-family: Arial, Helvetica, sans-serif;
@@ -129,7 +129,7 @@
 		</div>
 		<hr>
 		<div id="text-det">
-
+			<?= $contenido.' '.$id ?>
 		</div>
 
 

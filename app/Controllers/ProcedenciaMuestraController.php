@@ -64,7 +64,7 @@ class ProcedenciaMuestraController extends ResourceController
             if (!$data) {
                 return $this->failNotFound('Registro no se encuentra en la base de datos');
             }
-    
+            $data->estado = $data->estado === '1' ? true : false;
             return $this->respond($data, 200);
     
         } catch (\Exception $e) {
@@ -156,5 +156,34 @@ class ProcedenciaMuestraController extends ResourceController
         } catch (\Exception $e) {
             return $this->failServerError('Ha ocurrido un error en el servidor');
         }  
+    }
+    public function listaDespegableById($id = null)
+    {        
+        try {
+            $data = $this->procedenciaMuestraModel->getProcedenciaMuestraDespegableById($id);
+
+            if (!$data):
+                return $this->failNotFound('Registro no se encuentra en la base de datos');
+            endif;
+            return $this->respond($data, 200);
+
+        } catch (\Exception $e) {
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+
+    }
+    public function listaDespegable()
+    {
+        
+        $des_nombre = $this->request->getGet('des_nombre') ?? '';        
+
+        try {
+            $respuesta = $this->procedenciaMuestraModel->getProcedenciaMuestrasDespegable($des_nombre);
+            return $this->respond($respuesta, 200);
+        } catch (\Exception $e) {
+            // Handle exceptions
+            return $this->failServerError('Ha ocurrido un error en el servidor');
+        }
+
     }
 }

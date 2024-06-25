@@ -191,8 +191,7 @@ class PlantillaController extends ResourceController
 
     }
     public function listaDespegable()
-    {
-        
+    {        
         $des_nombre = $this->request->getGet('des_nombre') ?? '';        
 
         try {

@@ -94,7 +94,7 @@ class CompaniaModel extends Model
     }
     public function getCompaniasDespegable($nombre_comercial = '')
     {    
-        $this->select('id, nombre_comercial');
+        $this->select('id, nombre_comercial, idperfiltarifario');
 
         if (!empty($nombre_comercial)) {
             $this->like('nombre_comercial', $nombre_comercial, 'match');

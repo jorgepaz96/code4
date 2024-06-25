@@ -204,10 +204,8 @@ class PacienteController extends ResourceController
 
     }
     public function listaDespegable()
-    {
-        
+    {        
         $des_nombre_completo = $this->request->getGet('des_nombre_completo') ?? '';        
-
         try {
             $respuesta = $this->pacienteModel->getPacientesDespegable($des_nombre_completo);
             return $this->respond($respuesta, 200);
@@ -217,4 +215,4 @@ class PacienteController extends ResourceController
         }
 
     }
-}
+} 
